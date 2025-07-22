@@ -1,99 +1,106 @@
 import streamlit as st
-import plotly.express as px
 import pandas as pd
+import plotly.express as px
 
-
-def un_valor_grafica(tabla,value,df):
-    match tabla:
-        case "Pie":
-            st.subheader("Gráfico de Pie")
-            fig = px.pie(df, names=value, title=f"Gráfico de Pie de {value}")
-            st.plotly_chart(fig)
-        case "Histograma":
-            st.subheader("Gráfico de Histograma")
-            if value in df.columns:
-                fig = px.histogram(df, x=value,title=f"Gráfico de Histograma de {value}")
-                st.plotly_chart(fig)
-            else:
-                st.error(f"La columna '{value}' no existe en el DataFrame.")
-
-def dos_valor_grafica(tabla,x,y,df):
-    match tabla:
-        case "Dispersion":
-            st.subheader("Gráfico de Dispersión")
-            fig = px.scatter(df, x=x, y=y)
-            st.plotly_chart(fig)
-        case "Línea":
-            st.subheader("Gráfico de Línea")
-            fig = px.line(df, x=x, y=y)
-            st.plotly_chart(fig)
-        case "Barras":
-            st.subheader("Gráfico de Barras")
-            fig = px.bar(df, x=x, y=y)
-            st.plotly_chart(fig)
-        case "Barras en coordenadas polares":
-            st.subheader("Gráfico de Barras en Coordenadas Polares")
-            fig = px.bar_polar(df, r=y, theta=x)
-            st.plotly_chart(fig)
-        case "Embudo":
-            st.subheader("Gráfico Embudo")
-            fig = px.funnel(df, x=x, y=y)
-            st.plotly_chart(fig)
-            
-def grafica_boxplot(df):
-    x_axis = st.multiselect("Selecciona las columnas para el eje x:", df.columns)
-    y_axis = st.radio("Selecciona el eje y: ", df.columns)
-    fig = px.box(df, x=x_axis, y=y_axis)
-    st.plotly_chart(fig)
+def crear_tabla(df, key_suffix=""):
+    """
+    Función para crear gráficos interactivos en Streamlit.
     
-def grafica_dviolin(df):
-    x = st.selectbox("Selecciona el eje x: ",df.select_dtypes(include="object").columns)
-    y = st.selectbox("Selecciona el eje y: ", df.select_dtypes(include="number").columns)
-    box = st.selectbox("Visualizar con caja: ", ["Si","No"])
-    categoria = st.selectbox("Selecciona la categoría: ", df.select_dtypes(include=["object", "category"]).columns)
-    flag = False
-    if box == "Si":
-        flag = True
-    
-    st.subheader("Diagrama de Violín")
-    fig = px.violin(df, y=y, x=x, box=flag, color=categoria, hover_data=df.columns)
-    st.plotly_chart(fig)
-            
+    Args:
+        df (pd.DataFrame): DataFrame con los datos a visualizar.
+        key_suffix (str): Sufijo único para las claves de los widgets.
+    """
+    if not isinstance(df, pd.DataFrame) or df.empty:
+        st.error("❌ Error: El dato proporcionado no es un DataFrame válido o está vacío.")
+        return
 
-def grafica_numerica(df,tabla,x,y):
-    match tabla:
-        case "Rayos de Sol":
-            fig = px.sunburst(df, path=[x], values=y)
-            st.plotly_chart(fig)
-        case "Mapa de árbol":
-            fig = px.treemap(df, path=[x], values=y)
-            st.plotly_chart(fig)
-        
-        
-def crear_tabla(df,key_suffix=""):
-
-    graficos=["Dispersion","Línea","Barras","Barras en coordenadas polares","Boxplot","Diagrama de violin","Histograma","Pie","Embudo","Mapa de árbol","Rayos de Sol"]
-    columnas_numericas = df.select_dtypes(include=["number"]).columns.tolist()
+    # Selección del tipo de gráfico
+    tipos_graficos = [
+        'Gráfico de Dispersión', 'Gráfico de Líneas', 
+        'Gráfico de Barras', 'Gráfico de Pastel',
+        'Histograma', 'Boxplot', 'Diagrama de Violín',
+        'Embudo', 'Mapa de Árbol', 'Rayos de Sol', 'Barras en coordenadas polares'
+    ]
     
-    dataset_choice = st.selectbox(
-        "Selecciona la tabla:",
-        graficos,
-        key=f"dataset_choice_{hash(str(df))}" if key_suffix else None
+    tipo_grafico = st.selectbox(
+        'Seleccione el tipo de gráfico:',
+        tipos_graficos,
+        key=f'tipo_grafico_{key_suffix}'
     )
-    
-    if dataset_choice in ("Pie","Histograma")  :
-        value = st.selectbox("Selecciona el valor: ",df.columns)
-        un_valor_grafica(dataset_choice,value,df)    
-    elif dataset_choice == "Boxplot":
-        grafica_boxplot(df)
-    elif dataset_choice == "Diagrama de violin":
-        grafica_dviolin(df)
-    elif dataset_choice in ("Mapa de árbol","Rayos de Sol"):
-        x_axis = st.selectbox("Selecciona el eje x: ",df.columns)
-        value = st.selectbox("Selecciona el valor del eje y: ",columnas_numericas)
-        grafica_numerica(df,dataset_choice,x_axis,y_axis)
-    else:
-        x_axis = st.selectbox("Selecciona el eje x: ",df.columns)
-        y_axis = st.selectbox("Selecciona el eje y: ",df.columns)
-        dos_valor_grafica(dataset_choice,x_axis,y_axis,df)
-            
+
+    # Lógica para cada tipo de gráfico
+    if tipo_grafico in ['Gráfico de Pastel', 'Histograma']:
+        columna = st.selectbox(
+            f'Seleccione la columna para el {tipo_grafico}:',
+            df.columns,
+            key=f'columna_{key_suffix}'
+        )
+        if tipo_grafico == 'Gráfico de Pastel':
+            fig = px.pie(df, names=columna, title=f"{tipo_grafico} - {columna}")
+        else:  # Histograma
+            fig = px.histogram(df, x=columna, title=f"{tipo_grafico} - {columna}")
+        st.plotly_chart(fig, key=f'one_param_{tipo_grafico}_{key_suffix}')
+        
+    elif tipo_grafico in ['Mapa de Árbol', 'Rayos de Sol']:
+        col_x = st.selectbox(
+            'Seleccione el eje X:',
+            df.columns,
+            key=f'GraficoNumX_{key_suffix}'
+        )
+        col_y = st.selectbox(
+            'Seleccione el eje Y:',
+            df.select_dtypes(include=["number"]).columns.tolist(),
+            key=f'GraficoNumY_{key_suffix}'
+        )
+        if tipo_grafico == 'Mapa de Árbol':
+            fig = px.treemap(df, path=[col_x], values=col_y, title=f"{tipo_grafico} - {col_x} vs {col_y}")
+        else:
+            fig = px.sunburst(df, path=[col_x], values=col_y, title=f"{tipo_grafico} - {col_x} vs {col_y}")
+        st.plotly_chart(fig, key=f'Num_Graph_{tipo_grafico}_{key_suffix}')
+        
+    elif tipo_grafico == 'Boxplot':
+        col_x = st.multiselect("Selecciona las columnas para el eje x:", df.columns, key=f'boxplot_x_{key_suffix}')
+        col_y = st.radio(
+            'Seleccione la variable numérica:',
+            df.select_dtypes(include=['number']).columns,
+            key=f'boxplot_y_{key_suffix}'
+        )
+        if col_x:  # Verifica que se haya seleccionado al menos una columna
+            fig = px.box(df, x=col_x, y=col_y, title=f"Boxplot - {col_x} vs {col_y}")
+            st.plotly_chart(fig, key=f'boxplot_{key_suffix}')
+        else:
+            st.warning("⚠️ Selecciona al menos una columna para el eje X.")
+
+    elif tipo_grafico == 'Diagrama de Violín':
+        col_y = st.selectbox(
+            'Seleccione la variable numérica:',
+            df.select_dtypes(include=['number']).columns,
+            key=f'violin_{key_suffix}'
+        )
+        fig = px.violin(df, y=col_y, box=True, points="all", title=f"Diagrama de Violín - {col_y}")
+        st.plotly_chart(fig, key=f'plot_violin_{key_suffix}')
+
+    else:  # Gráficos de Dispersión, Líneas y Barras
+        col_x = st.selectbox(
+            'Seleccione el eje X:',
+            df.columns,
+            key=f'x_{key_suffix}'
+        )
+        col_y = st.selectbox(
+            'Seleccione el eje Y:',
+            df.columns,
+            key=f'y_{key_suffix}'
+        )
+        
+        if tipo_grafico == 'Gráfico de Dispersión':
+            fig = px.scatter(df, x=col_x, y=col_y, title=f"{tipo_grafico} - {col_x} vs {col_y}")
+        elif tipo_grafico == 'Gráfico de Líneas':
+            fig = px.line(df, x=col_x, y=col_y, title=f"{tipo_grafico} - {col_x} vs {col_y}")
+        elif tipo_grafico == 'Gráfico de Barras':
+            fig = px.bar(df, x=col_x, y=col_y, title=f"{tipo_grafico} - {col_x} vs {col_y}")
+        elif tipo_grafico == 'Embudo':
+            fig = px.funnel(df, x=col_x, y=col_y, title=f"{tipo_grafico} - {col_x} vs {col_y}")
+        
+        st.plotly_chart(fig, key=f'plot_{tipo_grafico}_{key_suffix}')
+        
+    st.success("✅ Gráfico creado exitosamente.")

@@ -9,3 +9,6 @@ def cargar_excel():
     except Exception as e:
         st.error(f"Error al cargar los datos: {str(e)}")
     return prog_df
+
+def agregar_datos(df, datos):
+    pass

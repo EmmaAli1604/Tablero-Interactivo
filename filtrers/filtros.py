@@ -6,8 +6,10 @@ def checar_previsualizacion(df_filtrado, df, columnas):
     if not df_filtrado.equals(df):
         if columnas:
             st.dataframe(df_filtrado[columnas])
+            return(df_filtrado[columnas])
         else:
             st.dataframe(df_filtrado)
+            return(df_filtrado)
     else:
         st.warning("No se encontraron datos con los filtros aplicados.")
         
@@ -34,7 +36,7 @@ def filtros(df):
             fecha_seleccionada = st.selectbox("Fecha:", opciones_fecha)
             
         with col3:
-            o_l = st.radio("Escoger opción:", df["Owned or Leased"].dropna().unique().tolist() + ["Sin opción"])
+            o_l = st.radio("Escoger opción:",["Sin opción"] + df["Owned or Leased"].dropna().unique().tolist())
         
         col4, col5 = st.columns(2)
         
@@ -67,6 +69,6 @@ def filtros(df):
         # Mostrar resultado
         st.markdown("### Resultado del filtrado")
 
-        checar_previsualizacion(df_filtrado, df, columnas)
+        df_filtrado =checar_previsualizacion(df_filtrado, df, columnas)
 
         return df_filtrado
