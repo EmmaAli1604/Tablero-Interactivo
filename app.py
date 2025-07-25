@@ -66,5 +66,4 @@ st.header("Creación de tablas")
 crear_tabla(df,key_suffix = "tabla_principal")
 
 st.header("Resumén general de los datos")
-resumen = df.describe()
-st.dataframe(resumen)
+

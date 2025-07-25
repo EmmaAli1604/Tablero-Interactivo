@@ -82,3 +82,50 @@ def filtros(df):
         st.button("Exportar en PDF de datos filtrados", on_click=exportar_pdf, args=(df_filtrado,EXPORT_PATH + f"reporte_{now}.pdf"))
 
         return df_filtrado
+    
+#####
+
+def filtros(df):
+    with st.expander("Filtrar datos", True):
+        df_filtrado = df.copy()
+
+        # 🧼 Asegúrate de que 'Construction Date' sea datetime
+        df_filtrado["Construction Date"] = pd.to_datetime(df_filtrado["Construction Date"], errors="coerce")
+
+        # 📆 Filtro por rango de fechas
+        st.markdown("### 📅 Filtrar por rango de fechas de construcción")
+        min_fecha = df_filtrado["Construction Date"].min().date()
+        max_fecha = df_filtrado["Construction Date"].max().date()
+
+        col_fecha1, col_fecha2 = st.columns(2)
+        with col_fecha1:
+            fecha_inicio = st.date_input("Desde:", value=min_fecha, min_value=min_fecha, max_value=max_fecha)
+        with col_fecha2:
+            fecha_fin = st.date_input("Hasta:", value=max_fecha, min_value=min_fecha, max_value=max_fecha)
+
+        return df_filtrado
+
+
+import re
+
+texto = """
+Inversión total: $120.000
+Presupuesto aprobado: 20 mdp
+Costo estimado: USD 3,500.00
+Monto alterno: 15 mil
+"""
+
+# Regex que detecta valores monetarios comunes
+patron = r"""
+(?i)                # ignorar mayúsculas/minúsculas
+(?:\$|usd\s?)?      # símbolo $ o "usd" opcional
+\d{1,3}(?:[.,]\d{3})*(?:[.,]\d+)?   # número como 120.000 o 3,500.00
+(?:\s?(mil|millones|mdp|k|m))?     # sufijo como mil, mdp, millones (opcional)
+"""
+
+coincidencias = re.findall(patron, texto, flags=re.VERBOSE)
+
+# re.findall devolverá los grupos si usas paréntesis: para obtener el texto completo, usa re.finditer
+matches = re.finditer(patron, texto, flags=re.VERBOSE)
+for m in matches:
+    print(m.group())
