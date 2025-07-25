@@ -1,11 +1,13 @@
 import pandas as pd
 import streamlit as st
 import plotly.express as px
-from data.loader import cargar_excel
+from data.loader import cargar_excel, exportar_excel, exportar_pdf
 from reports.creacion_tablas import crear_tabla
 from filtrers.filtros import filtros
-from reports.crear_reporte import main as crear_reporte
 import uuid
+import time
+from config.rutas import EXPORT_PATH
+import os
 
 #Configuracion de la pagina
 
@@ -31,9 +33,19 @@ with st.expander("Introduccón",True):
     )
     
 
+#Normalizar
+#df['respuesta'] = df['respuesta'].apply(
+    #lambda x: 'SI' if str(x).strip().lower() in ['sí', 'si', 's'] 
+    #else 'NO' if str(x).strip().lower() in ['no', 'n'] 
+    #else x
+#)
+
 df = cargar_excel()
 st.header("Datos del DataFrame")
 st.dataframe(df)
+now = time.strftime("%Y%m%d_%H%M%S")
+st.button("Exportar en Excel", on_click=exportar_excel, args=(df,EXPORT_PATH +  f"reporte_{now}.xlsx"))
+st.button("Exportar en PDF", on_click=exportar_pdf, args=(df,EXPORT_PATH + f"reporte_{now}.pdf"))
 
 st.header("Filtro de datos")
 df_filtrer = filtros(df)
@@ -56,6 +68,3 @@ crear_tabla(df,key_suffix = "tabla_principal")
 st.header("Resumén general de los datos")
 resumen = df.describe()
 st.dataframe(resumen)
-
-st.header ("Creación de reporte")
-crear_reporte(df)

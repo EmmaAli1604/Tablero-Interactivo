@@ -1,6 +1,11 @@
 import streamlit as st
 import plotly.express as px
 import pandas as pd
+import time
+from data.loader import exportar_excel,exportar_pdf
+
+from config.rutas import EXPORT_PATH
+from data.loader import exportar_excel
 
 def checar_previsualizacion(df_filtrado, df, columnas):
     if not df_filtrado.equals(df):
@@ -70,5 +75,10 @@ def filtros(df):
         st.markdown("### Resultado del filtrado")
 
         df_filtrado =checar_previsualizacion(df_filtrado, df, columnas)
+        
+        now = time.strftime("%Y%m%d_%H%M%S")
+        file_name = f"reporte_{now}.xlsx"
+        st.button("Exportar en Excel de datos filtrados", on_click=exportar_excel, args=(df_filtrado,EXPORT_PATH + file_name))
+        st.button("Exportar en PDF de datos filtrados", on_click=exportar_pdf, args=(df_filtrado,EXPORT_PATH + f"reporte_{now}.pdf"))
 
         return df_filtrado
